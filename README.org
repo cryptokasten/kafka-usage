@@ -1,0 +1,154 @@
+#+TITLE: Kafka usage
+#+PROPERTY: header-args :results silent
+
+** Install Kafka
+
+*** Install java
+
+#+BEGIN_SRC sh
+yum install java-1.8.0-openjdk
+#+END_SRC
+
+*** Download and untar Kafka.
+
+#+BEGIN_SRC sh
+curl -L  https://downloads.apache.org/kafka/2.5.0/kafka_2.12-2.5.0.tgz > kafka_2.12-2.5.0.tgz
+#+END_SRC
+
+#+BEGIN_SRC sh
+tar xzvf kafka_2.12-2.5.0.tgz
+#+END_SRC
+
+#+BEGIN_SRC sh
+mkdir /opt/kafka
+cp -r kafka_2.12-2.5.0/* /opt/kafka/
+#+END_SRC
+
+** Run kafka and zookeeper
+*** Run zookeeper
+
+#+BEGIN_SRC sh
+zookeeper-server-start.sh /opt/kafka/config/zookeeper.properties > /var/log/zookeeper.log 2> /var/log/zookeeper.error.log &
+#+END_SRC
+
+*** Run kafka single-node server
+
+#+BEGIN_SRC sh
+export KAFKA_OPTS="-Djava.net.preferIPv4Stack=True"
+kafka-server-start.sh /opt/kafka/config/server.properties > /var/log/kafka01.log 2> /var/log/kafka01.error.log &
+#+END_SRC
+
+** Run kafka and zookeeper as a service
+*** Zookeeper unit file
+
+#+BEGIN_SRC conf :tangle etc/systemd/system/kafka-zookeeper.service
+[Unit]
+Description=Apache Zookeeper server (Kafka)
+Documentation=http://zookeeper.apache.org
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+#User=kafka
+#Group=kafka
+ExecStart=/opt/kafka/bin/zookeeper-server-start.sh /opt/kafka/config/zookeeper.properties
+ExecStop=/opt/kafka/bin/zookeeper-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target
+#+END_SRC
+
+*** Kafka unit file
+
+#+BEGIN_SRC conf :tangle etc/systemd/system/kafka.service
+[Unit]
+Description=Apache Kafka server (broker)
+Documentation=http://kafka.apache.org/documentation.html
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target kafka-zookeeper.service
+
+[Service]
+Type=simple
+#User=kafka
+#Group=kafka
+Environment=KAFKA_OPTS="-Djava.net.preferIPv4Stack=True"
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target
+#+END_SRC
+
+** Kafka console tools
+
+Kafka built-in scripts.
+
+*** Create topic
+
+#+BEGIN_SRC sh
+/opt/kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test
+#+END_SRC
+
+*** Describe topics
+
+#+BEGIN_SRC sh
+/opt/kafka/bin/kafka-topics.sh --describe --topic test --bootstrap-server localhost:9092
+#+END_SRC
+
+*** Console producer
+
+#+BEGIN_SRC sh
+/opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic test
+#+END_SRC
+
+*** Console consumer
+
+#+BEGIN_SRC sh
+/opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test
+#+END_SRC
+
+#+BEGIN_SRC sh
+/opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning
+#+END_SRC
+
+** kafka-python usage
+
+https://github.com/dpkp/kafka-python
+
+*** Install kafka-python
+
+#+BEGIN_SRC sh
+pip install kafka-python
+#+END_SRC
+
+*** Python producer
+
+#+BEGIN_SRC sh
+python src/python/simple_producer.py
+#+END_SRC
+
+*** Python consumer
+
+#+BEGIN_SRC python
+python src/python/simple_consumer.py
+#+END_SRC
+
+** confluent-kafka usage
+*** Install confluent-kafka
+
+#+BEGIN_SRC sh
+pip install confluent-kafka
+#+END_SRC
+
+*** Confluent kafka producer
+
+#+BEGIN_SRC sh
+pip install confluent-kafka
+#+END_SRC
+
+#+BEGIN_SRC sh
+python src/confluent/producer.py
+#+END_SRC
+
+** Kafka cluster
