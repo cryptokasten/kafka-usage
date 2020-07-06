@@ -2,7 +2,6 @@
 #+PROPERTY: header-args :results silent
 
 ** Install Kafka
-
 *** Install java
 
 #+BEGIN_SRC sh
@@ -25,6 +24,12 @@ cp -r kafka_2.12-2.5.0/* /opt/kafka/
 #+END_SRC
 
 ** Run kafka and zookeeper
+*** Add PATH
+
+#+BEGIN_SRC sh
+PATH=/opt/kafka/bin:$PATH
+#+END_SRC
+
 *** Run zookeeper
 
 #+BEGIN_SRC sh
